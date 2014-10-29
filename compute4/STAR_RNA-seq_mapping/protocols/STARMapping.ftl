@@ -11,12 +11,41 @@ JAVA_HOME="${JAVA_HOME}"
 
 <#noparse>
 
+hostname
+
+module load jdk
+
 echo -e "fastq1=${fastq1}\nfastq2=${fastq2}\noutputFolder=${outputFolder}\nprefix=${prefix}\nSTAR=${STAR}\nSTARindex=${STARindex}"
 
 mkdir -p ${outputFolder}
 
 alloutputsexist ${outputFolder}/${prefix}Aligned.out.sorted.bam
 
+# Check md5sum
+if [ -a ${fastq1}.md5 ]
+then
+	cd `dirname ${fastq1}`
+	echo "Checking fastq1 MD5 sum"
+	if ! md5sum -c ${fastq1}.md5
+	then
+		echo "MD5 check for fastq1 failed"
+		exit 1
+	fi
+	cd -
+fi
+
+
+if [ ${#fastq2} -ne 0 -a -a ${fastq2}.md5 ]
+then
+	cd `dirname ${fastq2}`
+	echo "Checking fastq2 MD5 sum"
+	if ! md5sum -c ${fastq2}.md5
+	then
+		echo "MD5 check for fastq2 failed"
+		exit 1
+	fi
+	cd -
+fi
 
 inputs ${fastq1}
 
@@ -93,7 +122,7 @@ else
 	
 fi
 
-${JAVA_HOME}/bin/java -Xmx40g -Xms40g -jar ${picardTools}/SortSam.jar I=${TMPDIR}/${prefix}Aligned.out.sam O=${outputFolder}/${prefix}___tmp___Aligned.out.sorted.bam SO=coordinate TMP_DIR=${TMPDIR} CREATE_MD5_FILE=true CREATE_INDEX=true 
+java -Xmx40g -Xms40g -jar ${picardTools}/SortSam.jar I=${TMPDIR}/${prefix}Aligned.out.sam O=${outputFolder}/${prefix}___tmp___Aligned.out.sorted.bam SO=coordinate TMP_DIR=${TMPDIR} CREATE_MD5_FILE=true CREATE_INDEX=true 
 
 returnCode=$?
 

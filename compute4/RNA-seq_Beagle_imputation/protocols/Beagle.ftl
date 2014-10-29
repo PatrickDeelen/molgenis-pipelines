@@ -1,4 +1,4 @@
-#MOLGENIS walltime=1000:00:00 nodes=1 cores=14 mem=60
+#MOLGENIS walltime=240:00:00 nodes=1 cores=10 mem=20
 
 
 
@@ -7,27 +7,37 @@ GoNL=${GoNL}
 BeagleJar=${BeagleJar}
 prepareForBeagleJar=${prepareForBeagleJar}
 chr=${chr}
+chunk=${chunk}
+imputedVcfChunkPrefix=${imputedVcfChunkPrefix}
+imputedVcfChr=${imputedVcfChr}
 
 <#noparse>
 
+hostname
 
 module load jdk
 
 localOutput=${TMPDIR}/
-localImputedPrefix=${localOutput}chr${chr}.imputed
-finalImputedPrefix=${mergedVcfFile%vcf.gz}imputed
-exclMarkersFile=${localOutput}chr${chr}ExcludeRefMarkers.txt
+localImputedPrefix=${localOutput}chr${chr}.chunk${chunk}.imputed
+exclMarkersFile=${localOutput}chr${chr}.chunk${chunk}.ExcludeRefMarkers.txt
 
+echo "chr=${chr}"
+echo "chunk=${chunk}"
 echo "mergedVcfFile=${mergedVcfFile}"
 echo "localImputedPrefix=${localImputedPrefix}"
-echo "finalImputedPrefix=${finalImputedPrefix}"
+echo "imputedVcfChr=${imputedVcfChr}"
+echo "imputedVcfChunkPrefix=${imputedVcfChunkPrefix}"
 echo "exclMarkersFile=${exclMarkersFile}"
 
-if [ -s ${finalImputedPrefix}.vcf.gz ]; then
-	echo "File exists: ${finalImputedPrefix}.vcf.gz"
+
+if [ -s ${imputedVcfChr} ]; then
+	echo "File exists: ${imputedVcfChr}"
 	echo "skipping chr${chr}"
+elif [ -s "${imputedVcfChunkPrefix}.vcf.gz" ]; then
+	echo "File exists: ${imputedVcfChunkPrefix}.vcf.gz"
+	echo "skipping chr${chr} chunk${chunk}"
 else
-	echo "Processing chr${chr}"
+	echo "Processing chr${chr} chunk${chunk}"
 	
 	localMergedVcfFile=${localOutput}/chr${chr}.vcf.gz
 	cp ${mergedVcfFile} ${localMergedVcfFile}
@@ -40,12 +50,12 @@ else
 	#
 	
 	java \
-	-Xmx60g \
-	-Xms60g \
+	-Xmx20g \
+	-Xms20g \
 	-jar ${prepareForBeagleJar} \
 		--chunkSize 24000 \
 		--excludedMarkers ${exclMarkersFile} \
-		--refVariants ${GoNL}/chr${chr}.txt \
+		--refVariants ${GoNL}/chr${chr}.${chunk}.txt \
 		--studyVcf ${localMergedVcfFile} \
 		--outputVcf $localOutput/tmp.vcf
 	rm ${localOutput}/tmp.vcf
@@ -66,12 +76,12 @@ else
 	
 	java \
 	-Djava.io.tmpdir=$TMPDIR \
-	-Xmx60g \
-	-Xms60g \
+	-Xmx20g \
+	-Xms20g \
 	-jar ${BeagleJar} \
 	nthreads=10 \
 	gl=${localMergedVcfFile} \
-	ref=${GoNL}chr${chr}.vcf.gz \
+	ref=${GoNL}chr${chr}.${chunk}.vcf.gz \
 	chrom=${chr} \
 	excludemarkers=${exclMarkersFile} \
 	out=${localImputedPrefix}
@@ -79,9 +89,9 @@ else
 	returnCode=$?
 	echo "Beagle return code: $returnCode"
 	if [ $returnCode -eq 0 ]; then
-		echo "Moving temp files: ${localImputedPrefix}* to ${finalImputedPrefix}*"
-		mv ${localImputedPrefix}.vcf.gz ${finalImputedPrefix}.vcf.gz
-		mv ${localImputedPrefix}.log ${finalImputedPrefix}.log
+		echo "Moving temp files: ${localImputedPrefix}* to ${imputedVcfChunkPrefix}*"
+		mv -v ${localImputedPrefix}.vcf.gz ${imputedVcfChunkPrefix}.vcf.gz
+		mv -v ${localImputedPrefix}.log ${imputedVcfChunkPrefix}.log
 	else
 		echo "Beagle failed, not making files final"
 		exit 1
