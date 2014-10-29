@@ -1,4 +1,4 @@
-#MOLGENIS walltime=35:59:00 mem=4gb
+#MOLGENIS walltime=23:59:00 mem=4gb ppn=8
 
 #Parameter mapping
 #string stage
@@ -18,7 +18,6 @@
 #string inputGenerateCovariateTablesBam
 #string inputGenerateCovariateTablesBamIdx
 #string inputGenerateCovariateTablesTable
-#string tmpOutputGenerateCovariateTablesTable
 #string outputGenerateCovariateTablesTable
 
 
@@ -40,7 +39,6 @@ echo "inputRecal: ${inputRecal}"
 echo "inputGenerateCovariateTablesBam: ${inputGenerateCovariateTablesBam}"
 echo "inputGenerateCovariateTablesBamIdx: ${inputGenerateCovariateTablesBamIdx}"
 echo "inputGenerateCovariateTablesTable: ${inputGenerateCovariateTablesTable}"
-echo "tmpOutputGenerateCovariateTablesTable: ${tmpOutputGenerateCovariateTablesTable}"
 echo "outputGenerateCovariateTablesTable: ${outputGenerateCovariateTablesTable}"
 
 
@@ -70,11 +68,13 @@ fi
 ${stage} GATK/${GATKVersion}
 ${checkStage}
 
+makeTmpDir ${outputGenerateCovariateTablesTable}
+tmpOutputGenerateCovariateTablesTable=${MC_tmpFile}
 
 #If variable recal is "post" apply the recal.table to calculate improvement in metrics.
 if [ ${inputRecal} == "before" ]
 then
-	java -Djava.io.tmpdir=${tempDir} -Xmx4g -jar \
+	java -XX:ParallelGCThreads=4 -Djava.io.tmpdir=${tempDir} -Xmx4g -jar \
 	$GATK_HOME/${GATKJar} \
 	-T BaseRecalibrator \
 	-R ${indexFile} \
@@ -87,7 +87,7 @@ then
 
 elif [ ${inputRecal} == "post" ]
 then
-	java -Djava.io.tmpdir=${tempDir} -Xmx4g -jar \
+	java -XX:ParallelGCThreads=4 -Djava.io.tmpdir=${tempDir} -Xmx4g -jar \
 	$GATK_HOME/${GATKJar} \
 	-T BaseRecalibrator \
 	-R ${indexFile} \
@@ -103,19 +103,6 @@ else
 	echo -e "Variable inputRecal: ${inputRecal} does not contain a valid value.\n Valid values are "before" or "post".\n Please fix this and rerun the protocol.\n"
 
 fi
-
-#Get return code from last program call
-returnCode=$?
-
-echo -e "\nreturnCode GenerateCovariateTables: $returnCode\n\n"
-
-if [ $returnCode -eq 0 ]
-then
     echo -e "\nGenerateCovariateTables finished succesfull. Moving temp files to final.\n\n"
     mv ${tmpOutputGenerateCovariateTablesTable} ${outputGenerateCovariateTablesTable}
     putFile "${outputGenerateCovariateTablesTable}"
-    
-else
-    echo -e "\nFailed to move GenerateCovariateTables results to ${intermediateDir}\n\n"
-    exit -1
-fi

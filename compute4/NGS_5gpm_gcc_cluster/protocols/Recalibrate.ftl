@@ -1,14 +1,5 @@
-#
-# =====================================================
-# $Id$
-# $URL$
-# $LastChangedDate$
-# $LastChangedRevision$
-# $LastChangedBy$
-# =====================================================
-#
 
-#MOLGENIS walltime=45:59:00 mem=4 cores=1
+#MOLGENIS walltime=45:59:00 mem=4 cores=4
 
 module load GATK/1.0.5069
 module list
@@ -16,7 +7,7 @@ module list
 inputs "${indexfile}" 
 inputs "${matefixedbam}"
 inputs "${matefixedcovariatecsv}"
-inputs "${fivegpm200flankbed}"
+inputs "${baitsbed}"
 alloutputsexist "${recalbam}"
 
 java -jar -Xmx4g \
@@ -26,6 +17,6 @@ $GATK_HOME/GenomeAnalysisTK.jar \
 -U ALLOW_UNINDEXED_BAM \
 -R ${indexfile} \
 -I ${matefixedbam} \
--L ${fivegpm200flankbed} \
+-L ${baitsbed} \
 --recal_file ${matefixedcovariatecsv} \
 --out ${recalbam}

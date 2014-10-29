@@ -10,10 +10,9 @@
 #string indexFile
 #string beforeRecalTable
 #string postRecalTable
-#string tmpBQSRPdf
 #string BQSRPdf
-#string tmpBQSRCsv
 #string BQSRCsv
+#string RVersion
 
 #Echo parameter values
 echo "stage: ${stage}"
@@ -25,9 +24,7 @@ echo "intermediateDir: ${intermediateDir}"
 echo "indexFile: ${indexFile}"
 echo "beforeRecalTable: ${beforeRecalTable}"
 echo "postRecalTable: ${postRecalTable}"
-echo "tmpBQSRPdf: ${tmpBQSRPdf}"
 echo "BQSRPdf: ${BQSRPdf}"
-echo "tmpBQSRCsv: ${tmpBQSRCsv}"
 echo "BQSRCsv: ${BQSRCsv}"
 
 #Check if output exists
@@ -46,8 +43,15 @@ ${stage} GATK/${GATKVersion}
 ${stage} R/${RVersion}
 ${checkStage}
 
+makeTmpDir ${BQSRPdf}
+tmpBQSRPdf=${MC_tmpFile}
+
+makeTmpDir ${BQSRCsv}
+tmpBQSRCsv=${MC_tmpFile}
+
+
 #Analyze covariates (before and after) using GATK. Afterwards generate statistics and graphs and output as csv and pdf respectively
-java -Djava.io.tmpdir=${tempDir} -Xmx4g -jar \
+java -XX:ParallelGCThreads=4 -Djava.io.tmpdir=${tempDir} -Xmx4g -jar \
 $GATK_HOME/${GATKJar} \
 -T AnalyzeCovariates \
 -R ${indexFile} \
@@ -55,21 +59,8 @@ $GATK_HOME/${GATKJar} \
 -after ${postRecalTable} \
 -csv ${tmpBQSRCsv} \
 -plots ${tmpBQSRPdf}
-
-#Get return code from last program call
-returnCode=$?
-
-echo -e "\nreturnCode AnalyzeQualityScoreRecalibration: $returnCode\n\n"
-
-if [ $returnCode -eq 0 ]
-then
     echo -e "\nAnalyzeQualityScoreRecalibration finished succesfull. Moving temp files to final.\n\n"
     mv ${tmpBQSRPdf} ${BQSRPdf}
     mv ${tmpBQSRCsv} ${BQSRCsv}
     putFile "${BQSRPdf}"
     putFile "${BQSRCsv}"
-    
-else
-    echo -e "\nFailed to move AnalyzeQualityScoreRecalibration results to ${intermediateDir}\n\n"
-    exit -1
-fi

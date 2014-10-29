@@ -1,14 +1,5 @@
-#
-# =====================================================
-# $Id$
-# $URL$
-# $LastChangedDate$
-# $LastChangedRevision$
-# $LastChangedBy$
-# =====================================================
-#
 
-#MOLGENIS walltime=35:59:00 mem=6
+#MOLGENIS walltime=35:59:00 mem=6 nodes=1 cores=4
 
 module load picard-tools/1.61
 module list

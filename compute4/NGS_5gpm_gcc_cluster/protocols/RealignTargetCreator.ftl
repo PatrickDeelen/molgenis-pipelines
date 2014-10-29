@@ -1,14 +1,5 @@
-#
-# =====================================================
-# $Id$
-# $URL$
-# $LastChangedDate$
-# $LastChangedRevision$
-# $LastChangedBy$
-# =====================================================
-#
 
-#MOLGENIS walltime=35:59:00 mem=10
+#MOLGENIS walltime=35:59:00 mem=10 cores=4
 
 module load GATK/1.0.5069
 module list
@@ -17,7 +8,7 @@ inputs "${dedupbam}"
 inputs "${indexfile}" 
 inputs "${dbsnprod}"
 inputs "${pilot1KgVcf}"
-inputs "${fivegpm200flankbed}"
+inputs "${baitsbed}"
 
 alloutputsexist \
  "${realignTargets}"
@@ -28,7 +19,7 @@ $GATK_HOME/GenomeAnalysisTK.jar \
 -T RealignerTargetCreator \
 -U ALLOW_UNINDEXED_BAM \
 -I ${dedupbam} \
--L ${fivegpm200flankbed} \
+-L ${baitsbed} \
 -R ${indexfile} \
 -D ${dbsnprod} \
 -B:indels,VCF ${pilot1KgVcf} \

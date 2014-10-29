@@ -1,14 +1,5 @@
-#
-# =====================================================
-# $Id: ConcordanceCheck.ftl 12159 2012-06-13 10:56:41Z freerkvandijk $
-# $URL: http://www.molgenis.org/svn/molgenis_apps/trunk/modules/compute/protocols/ConcordanceCheck.ftl $
-# $LastChangedDate: 2012-06-13 12:56:41 +0200 (Wed, 13 Jun 2012) $
-# $LastChangedRevision: 12159 $
-# $LastChangedBy: freerkvandijk $
-# =====================================================
-#
 
-#MOLGENIS walltime=09:59:00 mem=4
+#MOLGENIS walltime=09:59:00 mem=8 cores=8 nodes=1
 #FOREACH externalSampleID
 
 inputs "${mergedbam}"
